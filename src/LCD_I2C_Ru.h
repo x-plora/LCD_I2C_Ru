@@ -179,6 +179,15 @@ public:
     /** @brief Number of I2C transmissions for which endTransmission() returned an error. */
     uint32_t getTransmissionErrorCount() const { return _transmissionErrorCount; }
 
+#ifdef DEBUG_LCD_I2C_Ru
+    /** @brief Number of characters still waiting in the asynchronous screen buffer. */
+    uint16_t getDirtyCount() const;
+    /** @brief Number of successfully transmitted asynchronous I2C bursts. */
+    uint32_t getSentBurstCount() const { return _sentBurstCount; }
+    /** @brief Number of characters successfully transmitted by asynchronous bursts. */
+    uint32_t getSentCharCount() const { return _sentCharCount; }
+#endif
+
     /** @brief Writes one byte, converting Russian UTF-8 sequences when applicable.
      * @param character Byte supplied by Print::print() or a direct caller.
      * @return Always 1, matching the Print contract.
@@ -236,6 +245,10 @@ private:
     uint8_t _cursorRow = 0; ///< Buffered cursor row.
     uint16_t _scanIndex = 0; ///< Next buffer position to inspect for changes.
     uint32_t _transmissionErrorCount = 0; ///< Cumulative failed I2C transmissions.
+#ifdef DEBUG_LCD_I2C_Ru
+    uint32_t _sentBurstCount = 0; ///< Cumulative successful asynchronous I2C bursts.
+    uint32_t _sentCharCount = 0; ///< Cumulative characters sent by asynchronous bursts.
+#endif
     /** @brief First byte class of a pending Russian UTF-8 sequence; -1 if absent. */
     int8_t _utf8CyrillicLead = -1; ///< Pending UTF-8 lead-byte class or -1.
 

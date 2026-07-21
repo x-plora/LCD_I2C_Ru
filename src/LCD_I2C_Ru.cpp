@@ -394,6 +394,22 @@ void LCD_I2C_Ru::setAsync(bool enabled)
         invalidate();
 }
 
+#ifdef DEBUG_LCD_I2C_Ru
+uint16_t LCD_I2C_Ru::getDirtyCount() const
+{
+    if (!_async || !hasBuffers())
+        return 0;
+
+    uint16_t dirty = 0;
+    for (uint16_t i = 0; i < _bufferSize; ++i)
+    {
+        if (_shadow[i] != _screen[i])
+            ++dirty;
+    }
+    return dirty;
+}
+#endif
+
 bool LCD_I2C_Ru::isBusy() const
 {
     if (!_async || !hasBuffers())
@@ -549,6 +565,10 @@ bool LCD_I2C_Ru::writeRunBurst(uint16_t startIndex, uint8_t count)
         ++_transmissionErrorCount;
         return false;
     }
+#ifdef DEBUG_LCD_I2C_Ru
+    ++_sentBurstCount;
+    _sentCharCount += count;
+#endif
     delayMicroseconds(50);
     return true;
 }
