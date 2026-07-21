@@ -1,7 +1,7 @@
-# Syntax Coloring Map For LCD_I2C
+# Syntax Coloring Map For LCD_I2C_Ru
 
 # Datatypes (KEYWORD1)
-LCD_I2C	KEYWORD1
+LCD_I2C_Ru	KEYWORD1
 
 # Methods and Functions (KEYWORD2)
 begin	KEYWORD2

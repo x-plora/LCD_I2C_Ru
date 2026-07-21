@@ -1,5 +1,5 @@
 /*
-    LCD_I2C - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
+    LCD_I2C_Ru - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
     * 2021-11-18 Brewmanz: make changes to also work for 20x4 LCD2004
 
     Copyright(C) 2020 Blackhack <davidaristi.0504@gmail.com>
@@ -20,8 +20,8 @@
 
 #pragma once
 
-#ifndef _LCD_I2C_h
-#define _LCD_I2C_h
+#ifndef _LCD_I2C_Ru_h
+#define _LCD_I2C_Ru_h
 
 #include "Arduino.h"
 
@@ -38,13 +38,13 @@ typedef arduino::MbedI2C TwoWire;
 class TwoWire;
 #endif
 
-class LCD_I2C : public Print
+class LCD_I2C_Ru : public Print
 {
 public:
     /**
      * This constructor just uses the default TwoWire object 'Wire'.
      */
-    LCD_I2C(uint8_t address, uint8_t columns = 16, uint8_t rows = 2);
+    LCD_I2C_Ru(uint8_t address, uint8_t columns = 16, uint8_t rows = 2);
 
     /**
      * This constructor takes a TwoWire object so that the driver can
@@ -57,12 +57,12 @@ public:
      * Just declare the other TwoWire object to be used as 'extern'.
      *
      * Example:
-     *  #include <LCD_I2C.h>
+     *  #include <LCD_I2C_Ru.h>
      *  extern TwoWire Wire1;
-     *  LCD_I2C(Wire1, 0x27, 16, 2);
+     *  LCD_I2C_Ru(Wire1, 0x27, 16, 2);
      *
      */
-    LCD_I2C(TwoWire& wire, uint8_t address, uint8_t columns = 16, uint8_t rows = 2);
+    LCD_I2C_Ru(TwoWire& wire, uint8_t address, uint8_t columns = 16, uint8_t rows = 2);
 
     /**
      * Some microcontrollers (like ESP32) require to set sda pin and
@@ -71,6 +71,8 @@ public:
     void begin(int sdaPin, int sclPin, bool beginWire = true);
 
     void begin(bool beginWire = true);
+    // Compatibility alias for LiquidCrystal_I2C-style sketches.
+    void init() { begin(); }
     void backlight();
     void noBacklight();
 
@@ -88,11 +90,20 @@ public:
     void noBlink();
     void scrollDisplayLeft();
     void scrollDisplayRight();
-    void createChar(uint8_t location, uint8_t charmap[]);
+    void createChar(uint8_t location, const uint8_t charmap[8]);
     void setCursor(uint8_t col, uint8_t row);
 
     // Method used by the Arduino class "Print" which is the one that provides the .print(string) method
     size_t write(uint8_t character) override;
+
+    // LiquidCrystal_I2C compatibility aliases.
+    void blink_on() { blink(); }
+    void blink_off() { noBlink(); }
+    void cursor_on() { cursor(); }
+    void cursor_off() { noCursor(); }
+    void setBacklight(uint8_t value) { value ? backlight() : noBacklight(); }
+    void load_custom_character(uint8_t location, uint8_t *charmap) { createChar(location, charmap); }
+    void printstr(const char text[]) { print(text); }
 
 private:
     void InitializeLCD();
@@ -107,6 +118,9 @@ private:
     const uint8_t _rowMax;    // Last valid row index. Note the row index starts at zero.
     uint8_t _displayState;
     uint8_t _entryState;
+    // First byte of a pending Russian Cyrillic UTF-8 sequence (0xD0 or 0xD1).
+    // -1 means no sequence is pending.
+    int8_t _utf8CyrillicLead = -1;
 
     /* This struct helps us constructing the I2C output based on data and control outputs.
        Because the LCD is set to 4-bit mode, 4 bits of the I2C output are for the control outputs
@@ -134,4 +148,4 @@ private:
     } _output;
 };
 
-#endif // #ifndef _LCD_I2C_h
+#endif // #ifndef _LCD_I2C_Ru_h

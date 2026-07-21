@@ -1,5 +1,5 @@
 /*
-    LCD_I2C - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
+    LCD_I2C_Ru - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
     * 2021-11-18 Brewmanz: make changes to also work for 20x4 LCD2004
 
     Copyright(C) 2020 Blackhack <davidaristi.0504@gmail.com>
@@ -18,22 +18,37 @@
     along with this program.If not, see < https://www.gnu.org/licenses/>.
 */
 
-#include "LCD_I2C.h"
+#include "LCD_I2C_Ru.h"
 #include "Wire.h"
 
-LCD_I2C::LCD_I2C(TwoWire& wire, uint8_t address, uint8_t columns, uint8_t rows)
+// Russian UTF-8 conversion derived from LiquidCrystal_I2C_Ru.
+// See THIRD_PARTY_NOTICES.md for its MIT license notice.
+// Indexes are the low six bits of a byte following UTF-8 lead byte 0xD0 or 0xD1.
+// The values target the common HD44780U-compatible Cyrillic character ROM.
+static const uint8_t utf8CyrillicToHd44780[64] = {
+    0x70, 0x63, 0xbf, 0x79, 0xe4, 0x78, 0xe5, 0xc0,
+    0xc1, 0xe6, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
+    0x41, 0xa0, 0x42, 0xa1, 0xe0, 0x45, 0xa3, 0xa4,
+    0xa5, 0xa6, 0x4b, 0xa7, 0x4d, 0x48, 0x4f, 0xa8,
+    0x50, 0x43, 0x54, 0xa9, 0xaa, 0x58, 0xe1, 0xab,
+    0xac, 0xe2, 0xad, 0xae, 0x62, 0xaf, 0xb0, 0xb1,
+    0x61, 0xb2, 0xb3, 0xb4, 0xe3, 0x65, 0xb6, 0xb7,
+    0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0x6f, 0xbe
+};
+
+LCD_I2C_Ru::LCD_I2C_Ru(TwoWire& wire, uint8_t address, uint8_t columns, uint8_t rows)
     : _wire(wire) // Use the TwoWire object passed as parameter.
     , _address(address), _columnMax(columns-1), _rowMax(rows-1), _displayState(0x00), _entryState(0x00)
 {
 }
 
-LCD_I2C::LCD_I2C(uint8_t address, uint8_t columns, uint8_t rows)
+LCD_I2C_Ru::LCD_I2C_Ru(uint8_t address, uint8_t columns, uint8_t rows)
     : _wire(Wire) // Use the default object 'Wire'.
     , _address(address), _columnMax(columns-1), _rowMax(rows-1), _displayState(0x00), _entryState(0x00)
 {
 }
 
-void LCD_I2C::begin(int sdaPin, int sclPin, bool beginWire)
+void LCD_I2C_Ru::begin(int sdaPin, int sclPin, bool beginWire)
 {
 #if defined (ESP32)
     // ESP32 requires setting sda and scl pins.
@@ -42,7 +57,7 @@ void LCD_I2C::begin(int sdaPin, int sclPin, bool beginWire)
     begin(beginWire);
 }
 
-void LCD_I2C::begin(bool beginWire)
+void LCD_I2C_Ru::begin(bool beginWire)
 {
 
     if (beginWire)
@@ -54,19 +69,19 @@ void LCD_I2C::begin(bool beginWire)
     InitializeLCD();
 }
 
-void LCD_I2C::backlight()
+void LCD_I2C_Ru::backlight()
 {
     _output.Led = 1;
     I2C_Write(0b00000000 | _output.Led << 3); // Led pin is independent from LCD data and control lines.
 }
 
-void LCD_I2C::noBacklight()
+void LCD_I2C_Ru::noBacklight()
 {
     _output.Led = 0;
     I2C_Write(0b00000000 | _output.Led << 3); // Led pin is independent from LCD data and control lines.
 }
 
-void LCD_I2C::clear()
+void LCD_I2C_Ru::clear()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -75,7 +90,7 @@ void LCD_I2C::clear()
     delayMicroseconds(1600);
 }
 
-void LCD_I2C::home()
+void LCD_I2C_Ru::home()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -85,7 +100,7 @@ void LCD_I2C::home()
 }
 
 // Part of Entry mode set
-void LCD_I2C::leftToRight()
+void LCD_I2C_Ru::leftToRight()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -97,7 +112,7 @@ void LCD_I2C::leftToRight()
 }
 
 // Part of Entry mode set
-void LCD_I2C::rightToLeft()
+void LCD_I2C_Ru::rightToLeft()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -109,7 +124,7 @@ void LCD_I2C::rightToLeft()
 }
 
 // Part of Entry mode set
-void LCD_I2C::autoscroll()
+void LCD_I2C_Ru::autoscroll()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -121,7 +136,7 @@ void LCD_I2C::autoscroll()
 }
 
 // Part of Entry mode set
-void LCD_I2C::noAutoscroll()
+void LCD_I2C_Ru::noAutoscroll()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -133,7 +148,7 @@ void LCD_I2C::noAutoscroll()
 }
 
 // Part of Display control
-void LCD_I2C::display()
+void LCD_I2C_Ru::display()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -145,7 +160,7 @@ void LCD_I2C::display()
 }
 
 // Part of Display control
-void LCD_I2C::noDisplay()
+void LCD_I2C_Ru::noDisplay()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -157,7 +172,7 @@ void LCD_I2C::noDisplay()
 }
 
 // Part of Display control
-void LCD_I2C::cursor()
+void LCD_I2C_Ru::cursor()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -169,7 +184,7 @@ void LCD_I2C::cursor()
 }
 
 // Part of Display control
-void LCD_I2C::noCursor()
+void LCD_I2C_Ru::noCursor()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -181,7 +196,7 @@ void LCD_I2C::noCursor()
 }
 
 // Part of Display control
-void LCD_I2C::blink()
+void LCD_I2C_Ru::blink()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -193,7 +208,7 @@ void LCD_I2C::blink()
 }
 
 // Part of Display control
-void LCD_I2C::noBlink()
+void LCD_I2C_Ru::noBlink()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -205,7 +220,7 @@ void LCD_I2C::noBlink()
 }
 
 // Part of Cursor or display shift
-void LCD_I2C::scrollDisplayLeft()
+void LCD_I2C_Ru::scrollDisplayLeft()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -215,7 +230,7 @@ void LCD_I2C::scrollDisplayLeft()
 }
 
 // Part of Cursor or display shift
-void LCD_I2C::scrollDisplayRight()
+void LCD_I2C_Ru::scrollDisplayRight()
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -225,7 +240,7 @@ void LCD_I2C::scrollDisplayRight()
 }
 
 // Set CGRAM address
-void LCD_I2C::createChar(uint8_t location, uint8_t charmap[])
+void LCD_I2C_Ru::createChar(uint8_t location, const uint8_t charmap[8])
 {
     _output.rs = 0;
     _output.rw = 0;
@@ -242,7 +257,7 @@ void LCD_I2C::createChar(uint8_t location, uint8_t charmap[])
 }
 
 // Set DDRAM address
-void LCD_I2C::setCursor(uint8_t col, uint8_t row)
+void LCD_I2C_Ru::setCursor(uint8_t col, uint8_t row)
 {
     static const uint8_t row_offsets[] = {0x00, 0x40, 0x14, 0x54};
     _output.rs = 0;
@@ -257,10 +272,43 @@ void LCD_I2C::setCursor(uint8_t col, uint8_t row)
     delayMicroseconds(37);
 }
 
-size_t LCD_I2C::write(uint8_t character)
+size_t LCD_I2C_Ru::write(uint8_t character)
 {
     _output.rs = 1;
     _output.rw = 0;
+
+    if (_utf8CyrillicLead >= 0)
+    {
+        const uint8_t suffix = character & 0x3F;
+        const bool validCyrillic =
+            (_utf8CyrillicLead == 0 && suffix >= 0x10) || // U+0410..U+043F
+            (_utf8CyrillicLead == 1 && suffix <= 0x0F) || // U+0440..U+044F
+            (_utf8CyrillicLead == 0 && suffix == 0x01) || // U+0401: Ё
+            (_utf8CyrillicLead == 1 && suffix == 0x11);   // U+0451: ё
+
+        if (character >= 0x80 && character <= 0xBF && validCyrillic)
+        {
+            const uint8_t hd44780Character =
+                (_utf8CyrillicLead == 0 && suffix == 0x01) ? 0xA2 :
+                (_utf8CyrillicLead == 1 && suffix == 0x11) ? 0xB5 :
+                utf8CyrillicToHd44780[suffix];
+            _utf8CyrillicLead = -1;
+            LCD_WriteByte(hd44780Character);
+            delayMicroseconds(41);
+            return 1;
+        }
+
+        // Preserve an incomplete sequence as its original lead byte.
+        LCD_WriteByte(0xD0 + _utf8CyrillicLead);
+        delayMicroseconds(41);
+        _utf8CyrillicLead = -1;
+    }
+
+    if (character == 0xD0 || character == 0xD1)
+    {
+        _utf8CyrillicLead = character - 0xD0;
+        return 1;
+    }
 
     LCD_WriteByte(character);
     delayMicroseconds(41);
@@ -268,7 +316,7 @@ size_t LCD_I2C::write(uint8_t character)
     return 1;
 }
 
-void LCD_I2C::InitializeLCD()
+void LCD_I2C_Ru::InitializeLCD()
 {
     // See HD44780U datasheet "Initializing by Instruction" Figure 24 (4-Bit Interface)
     _output.rs = 0;
@@ -290,21 +338,21 @@ void LCD_I2C::InitializeLCD()
     leftToRight();
 }
 
-void LCD_I2C::I2C_Write(uint8_t output)
+void LCD_I2C_Ru::I2C_Write(uint8_t output)
 {
     _wire.beginTransmission(_address);
     _wire.write(output);
     _wire.endTransmission();
 }
 
-void LCD_I2C::LCD_WriteHighNibble(uint8_t output)
+void LCD_I2C_Ru::LCD_WriteHighNibble(uint8_t output)
 {
     I2C_Write(_output.getHighData(output, true));
     delayMicroseconds(1); // High part of enable should be >450 nS
     I2C_Write(_output.getHighData(output, false));
 }
 
-void LCD_I2C::LCD_WriteByte(uint8_t output)
+void LCD_I2C_Ru::LCD_WriteByte(uint8_t output)
 {
     LCD_WriteHighNibble(output);
     delayMicroseconds(37); // I think we need a delay between half byte writes, but no sure how long it needs to be.

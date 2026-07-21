@@ -1,5 +1,5 @@
 /*
-    LCD_I2C - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
+    LCD_I2C_Ru - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
 
     Copyright(C) 2020 Blackhack <davidaristi.0504@gmail.com>
 
@@ -17,9 +17,9 @@
     along with this program.If not, see < https://www.gnu.org/licenses/>.
 */
 
-#include <LCD_I2C.h>
+#include <LCD_I2C_Ru.h>
 
-LCD_I2C lcd(0x27, 16, 2); // Default address of most PCF8574 modules, change according
+LCD_I2C_Ru lcd(0x27, 16, 2); // Default address of most PCF8574 modules, change according
 
 /*
 * When using lcd.print() (and almost everywhere you use string literals),

@@ -1,5 +1,5 @@
 /*
-    LCD_I2C - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
+    LCD_I2C_Ru - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
 
     Copyright(C) 2020 Blackhack <davidaristi.0504@gmail.com>
 
@@ -17,16 +17,16 @@
     along with this program.If not, see < https://www.gnu.org/licenses/>.
 */
 
-#include <LCD_I2C.h>
+#include <LCD_I2C_Ru.h>
 
 // Use the second I2C interface 'Wire1'. (E.g. Arduino Due or ESP32 support two I2C interfaces.)
 extern TwoWire Wire1;
-LCD_I2C lcd(Wire1, 0x27, 16, 2); // Default address of most PCF8574 modules, change according
+LCD_I2C_Ru lcd(Wire1, 0x27, 16, 2); // Default address of most PCF8574 modules, change according
 
 void setup()
 {
     lcd.begin(); // If you are using more I2C devices using the Wire library use lcd.begin(false)
-                 // this stop the library(LCD_I2C) from calling Wire.begin()
+                 // this stops the library from calling Wire.begin()
     // Note: On ESP32 you would rather use:
     //
     //   lcd.begin(4,5);
