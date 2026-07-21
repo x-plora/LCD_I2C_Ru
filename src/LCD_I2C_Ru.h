@@ -63,6 +63,7 @@ public:
      *
      */
     LCD_I2C_Ru(TwoWire& wire, uint8_t address, uint8_t columns = 16, uint8_t rows = 2);
+    ~LCD_I2C_Ru();
 
     /**
      * Some microcontrollers (like ESP32) require to set sda pin and
@@ -93,6 +94,18 @@ public:
     void createChar(uint8_t location, const uint8_t charmap[8]);
     void setCursor(uint8_t col, uint8_t row);
 
+    // Enable buffered, non-blocking screen updates. Call tick() regularly
+    // (or flush() to update all changed characters immediately).
+    void setAsync(bool enabled);
+    void tick();
+    void tick(uint8_t maxChars);
+    bool isBusy() const;
+    void flush();
+    void invalidate();
+
+    // Number of I2C transmissions for which endTransmission() returned an error.
+    uint32_t getTransmissionErrorCount() const { return _transmissionErrorCount; }
+
     // Method used by the Arduino class "Print" which is the one that provides the .print(string) method
     size_t write(uint8_t character) override;
 
@@ -107,6 +120,12 @@ public:
 
 private:
     void InitializeLCD();
+    bool allocateBuffers();
+    bool hasBuffers() const;
+    uint8_t findDirtyRun(uint16_t *startIndex, uint8_t maxChars);
+    bool writeRunBurst(uint16_t startIndex, uint8_t count);
+    void writeByteToBurst(uint8_t output);
+    void writeCharacter(uint8_t character);
     void I2C_Write(uint8_t output);
     void LCD_WriteByte(uint8_t output);
     inline void LCD_WriteHighNibble(uint8_t output);
@@ -114,10 +133,19 @@ private:
 private:
     TwoWire& _wire;
     const uint8_t _address;
-    const uint8_t _columnMax; // Last valid column index. Note the column index starts at zero.
-    const uint8_t _rowMax;    // Last valid row index. Note the row index starts at zero.
+    // Geometry is fixed at construction time. HD44780 supports at most four rows.
+    const uint8_t _columns;
+    const uint8_t _rows;
     uint8_t _displayState;
     uint8_t _entryState;
+    bool _async = false;
+    uint8_t *_shadow = nullptr;
+    uint8_t *_screen = nullptr;
+    uint16_t _bufferSize = 0;
+    uint8_t _cursorCol = 0;
+    uint8_t _cursorRow = 0;
+    uint16_t _scanIndex = 0;
+    uint32_t _transmissionErrorCount = 0;
     // First byte of a pending Russian Cyrillic UTF-8 sequence (0xD0 or 0xD1).
     // -1 means no sequence is pending.
     int8_t _utf8CyrillicLead = -1;

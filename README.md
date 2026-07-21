@@ -23,6 +23,15 @@ For migration from `LiquidCrystal_I2C`, the aliases `init()`, `setBacklight()`,
 `cursor_on/off()`, `blink_on/off()`, `printstr()`, and
 `load_custom_character()` are also available.
 
+## Buffered updates
+
+The display geometry is fixed by the constructor; valid row counts are `1` to
+`4`. After `begin()`, call `setAsync(true)` to keep a screen buffer. `print()`,
+`setCursor()` and `clear()` then update the buffer, while `tick()` sends only
+changed characters without blocking the main loop. `flush()` sends all pending
+changes immediately. `getTransmissionErrorCount()` returns the number of I2C
+transmissions rejected by the bus.
+
 ## Русский
 
 Библиотека Arduino для управления LCD-дисплеями, совместимыми с HD44780,
@@ -48,3 +57,13 @@ void setup() {
 Для переноса скетчей с `LiquidCrystal_I2C` доступны алиасы `init()`,
 `setBacklight()`, `cursor_on/off()`, `blink_on/off()`, `printstr()` и
 `load_custom_character()`.
+
+## Буферизированное обновление
+
+Размер дисплея задаётся конструктором и после этого не меняется; допустимо от
+`1` до `4` строк. После `begin()` вызовите `setAsync(true)`, чтобы включить
+экранный буфер. Тогда `print()`, `setCursor()` и `clear()` изменяют буфер, а
+`tick()` передаёт только изменившиеся символы и не блокирует основной цикл.
+`flush()` отправляет все ожидающие изменения сразу.
+`getTransmissionErrorCount()` возвращает число I2C-транзакций, завершившихся
+ошибкой.
