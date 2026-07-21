@@ -1,21 +1,31 @@
-/*
-    LCD_I2C_Ru - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
-    * 2021-11-18 Brewmanz: make changes to also work for 20x4 LCD2004
-
-    Copyright(C) 2020 Blackhack <davidaristi.0504@gmail.com>
-
-    This program is free software : you can redistribute it and /or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.If not, see < https://www.gnu.org/licenses/>.
+/**
+ * @file LCD_I2C_Ru.cpp
+ * @brief Implements the PCF8574 and HD44780 communication logic.
+ * @details Contains synchronous and buffered I2C output, UTF-8 Cyrillic
+ * conversion, cursor management, and error accounting.
+ * @version 2.5.0
+ * @author Blackhack; Russian UTF-8 conversion by Ilya Danilov; Async mode by Kirill X-plora Chugreev
+ * @copyright Copyright (C) 2020 Blackhack, GPL-3.0-or-later.
+ * @copyright Copyright (C) 2026 Kirill X-plora Chugreev, GPL-3.0-or-later.
+ * @date 2026-07-22
+ *
+ * LCD_I2C_Ru - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
+ * 2021-11-18 Brewmanz: make changes to also work for 20x4 LCD2004
+ *
+ * Copyright(C) 2020 Blackhack <davidaristi.0504@gmail.com>
+ *
+ * This program is free software : you can redistribute it and /or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.If not, see < https://www.gnu.org/licenses/>.
 */
 
 #include "LCD_I2C_Ru.h"
@@ -23,13 +33,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+/** @brief Maximum row count addressable by the HD44780 row-offset table. */
 static const uint8_t lcdMaxRows = 4;
+/** @brief Maximum data characters grouped in one Wire transmission. */
 static const uint8_t lcdMaxCharsPerI2cBurst = 4;
 
-// Russian UTF-8 conversion derived from LiquidCrystal_I2C_Ru.
-// See THIRD_PARTY_NOTICES.md for its MIT license notice.
-// Indexes are the low six bits of a byte following UTF-8 lead byte 0xD0 or 0xD1.
-// The values target the common HD44780U-compatible Cyrillic character ROM.
+/**
+ * @brief Maps Russian UTF-8 suffix bytes to common HD44780 Cyrillic ROM codes.
+ * @details Derived from LiquidCrystal_I2C_Ru; see THIRD_PARTY_NOTICES.md for
+ * its MIT license notice. Indexes are low six bits following 0xD0 or 0xD1.
+ */
 static const uint8_t utf8CyrillicToHd44780[64] = {
     0x70, 0x63, 0xbf, 0x79, 0xe4, 0x78, 0xe5, 0xc0,
     0xc1, 0xe6, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
@@ -66,7 +79,7 @@ LCD_I2C_Ru::~LCD_I2C_Ru()
 void LCD_I2C_Ru::begin(int sdaPin, int sclPin, bool beginWire)
 {
 #if defined (ESP32)
-    // ESP32 requires setting sda and scl pins.
+    /** @brief ESP32 requires explicit SDA and SCL pin configuration. */
     _wire.setPins(sdaPin, sclPin);
 #else
     (void)sdaPin;
@@ -146,7 +159,7 @@ void LCD_I2C_Ru::home()
     _cursorRow = 0;
 }
 
-// Part of Entry mode set
+/** @brief Updates the HD44780 entry-mode command for left-to-right text. */
 void LCD_I2C_Ru::leftToRight()
 {
     _output.rs = 0;
@@ -158,7 +171,7 @@ void LCD_I2C_Ru::leftToRight()
     delayMicroseconds(37);
 }
 
-// Part of Entry mode set
+/** @brief Updates the HD44780 entry-mode command for right-to-left text. */
 void LCD_I2C_Ru::rightToLeft()
 {
     _output.rs = 0;
@@ -170,7 +183,7 @@ void LCD_I2C_Ru::rightToLeft()
     delayMicroseconds(37);
 }
 
-// Part of Entry mode set
+/** @brief Updates the HD44780 entry-mode command to enable autoscroll. */
 void LCD_I2C_Ru::autoscroll()
 {
     _output.rs = 0;
@@ -182,7 +195,7 @@ void LCD_I2C_Ru::autoscroll()
     delayMicroseconds(37);
 }
 
-// Part of Entry mode set
+/** @brief Updates the HD44780 entry-mode command to disable autoscroll. */
 void LCD_I2C_Ru::noAutoscroll()
 {
     _output.rs = 0;
@@ -194,7 +207,7 @@ void LCD_I2C_Ru::noAutoscroll()
     delayMicroseconds(37);
 }
 
-// Part of Display control
+/** @brief Updates the HD44780 display-control command to show the display. */
 void LCD_I2C_Ru::display()
 {
     _output.rs = 0;
@@ -206,7 +219,7 @@ void LCD_I2C_Ru::display()
     delayMicroseconds(37);
 }
 
-// Part of Display control
+/** @brief Updates the HD44780 display-control command to hide the display. */
 void LCD_I2C_Ru::noDisplay()
 {
     _output.rs = 0;
@@ -218,7 +231,7 @@ void LCD_I2C_Ru::noDisplay()
     delayMicroseconds(37);
 }
 
-// Part of Display control
+/** @brief Updates the HD44780 display-control command to show the cursor. */
 void LCD_I2C_Ru::cursor()
 {
     _output.rs = 0;
@@ -230,7 +243,7 @@ void LCD_I2C_Ru::cursor()
     delayMicroseconds(37);
 }
 
-// Part of Display control
+/** @brief Updates the HD44780 display-control command to hide the cursor. */
 void LCD_I2C_Ru::noCursor()
 {
     _output.rs = 0;
@@ -242,7 +255,7 @@ void LCD_I2C_Ru::noCursor()
     delayMicroseconds(37);
 }
 
-// Part of Display control
+/** @brief Updates the HD44780 display-control command to enable blinking. */
 void LCD_I2C_Ru::blink()
 {
     _output.rs = 0;
@@ -254,7 +267,7 @@ void LCD_I2C_Ru::blink()
     delayMicroseconds(37);
 }
 
-// Part of Display control
+/** @brief Updates the HD44780 display-control command to disable blinking. */
 void LCD_I2C_Ru::noBlink()
 {
     _output.rs = 0;
@@ -266,7 +279,7 @@ void LCD_I2C_Ru::noBlink()
     delayMicroseconds(37);
 }
 
-// Part of Cursor or display shift
+/** @brief Issues the HD44780 display-shift-left command. */
 void LCD_I2C_Ru::scrollDisplayLeft()
 {
     _output.rs = 0;
@@ -276,7 +289,7 @@ void LCD_I2C_Ru::scrollDisplayLeft()
     delayMicroseconds(37);
 }
 
-// Part of Cursor or display shift
+/** @brief Issues the HD44780 display-shift-right command. */
 void LCD_I2C_Ru::scrollDisplayRight()
 {
     _output.rs = 0;
@@ -286,7 +299,7 @@ void LCD_I2C_Ru::scrollDisplayRight()
     delayMicroseconds(37);
 }
 
-// Set CGRAM address
+/** @brief Selects a CGRAM address and writes a custom glyph. */
 void LCD_I2C_Ru::createChar(uint8_t location, const uint8_t charmap[8])
 {
     const bool asyncWasEnabled = _async;
@@ -312,7 +325,7 @@ void LCD_I2C_Ru::createChar(uint8_t location, const uint8_t charmap[8])
     _async = asyncWasEnabled;
 }
 
-// Set DDRAM address
+/** @brief Selects a clamped DDRAM cursor address. */
 void LCD_I2C_Ru::setCursor(uint8_t col, uint8_t row)
 {
     if (col >= _columns) { col = _columns - 1; }
@@ -355,7 +368,7 @@ size_t LCD_I2C_Ru::write(uint8_t character)
             return 1;
         }
 
-        // Preserve an incomplete sequence as its original lead byte.
+        /** @note Preserve an incomplete UTF-8 sequence as its original lead byte. */
         writeCharacter(0xD0 + _utf8CyrillicLead);
         _utf8CyrillicLead = -1;
     }
@@ -574,7 +587,7 @@ void LCD_I2C_Ru::writeCharacter(uint8_t character)
 
 void LCD_I2C_Ru::InitializeLCD()
 {
-    // See HD44780U datasheet "Initializing by Instruction" Figure 24 (4-Bit Interface)
+    /** @details Follows HD44780U Figure 24, "Initializing by Instruction" in 4-bit mode. */
     _output.rs = 0;
     _output.rw = 0;
 
@@ -619,6 +632,5 @@ void LCD_I2C_Ru::LCD_WriteByte(uint8_t output)
     delayMicroseconds(1); // High part of enable should be >450 nS
     I2C_Write(_output.getLowData(output, false));
 
-    //delayMicroseconds(37); // Some commands have different timing requirement,
-                             // so every command should handle its own delay after execution
+    /** @note Commands apply their own post-execution delay because timings differ. */
 }
