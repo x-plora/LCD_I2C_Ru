@@ -4,9 +4,11 @@
  * @details Contains synchronous and buffered I2C output, UTF-8 Cyrillic
  * conversion, cursor management, and error accounting.
  * @version 2.5.0
- * @author Blackhack; Russian UTF-8 conversion by Ilya Danilov; Async mode by Kirill X-plora Chugreev
+ * @author Blackhack; Russian UTF-8 conversion by Ilya V. Danilov (mk90/LiquidCrystalRus); Async mode by Kirill X-plora Chugreev
  * @copyright Copyright (C) 2020 Blackhack, GPL-3.0-or-later.
  * @copyright Copyright (C) 2026 Kirill X-plora Chugreev, GPL-3.0-or-later.
+ * @license GPL-3.0-or-later
+ * @note Modified 2026-07-22: added asynchronous buffered mode.
  * @date 2026-07-22
  *
  * LCD_I2C_Ru - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
@@ -40,8 +42,9 @@ static const uint8_t lcdMaxCharsPerI2cBurst = 4;
 
 /**
  * @brief Maps Russian UTF-8 suffix bytes to common HD44780 Cyrillic ROM codes.
- * @details Derived from LiquidCrystal_I2C_Ru; see THIRD_PARTY_NOTICES.md for
- * its MIT license notice. Indexes are low six bits following 0xD0 or 0xD1.
+ * @details Derived from Ilya V. Danilov's mk90/LiquidCrystalRus project:
+ * https://github.com/mk90/LiquidCrystalRus. Indexes are low six bits after
+ * UTF-8 lead bytes 0xD0 or 0xD1.
  */
 static const uint8_t utf8CyrillicToHd44780[64] = {
     0x70, 0x63, 0xbf, 0x79, 0xe4, 0x78, 0xe5, 0xc0,

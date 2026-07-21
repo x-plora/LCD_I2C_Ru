@@ -4,9 +4,11 @@
  * @details Supports PCF8574 backpacks, Russian UTF-8 conversion, and optional
  * buffered display updates.
  * @version 2.5.0
- * @author Blackhack; Russian UTF-8 conversion by Ilya Danilov; Async mode by Kirill X-plora Chugreev
+ * @author Blackhack; Russian UTF-8 conversion by Ilya V. Danilov (mk90/LiquidCrystalRus); Async mode by Kirill X-plora Chugreev
  * @copyright Copyright (C) 2020 Blackhack, GPL-3.0-or-later.
  * @copyright Copyright (C) 2026 Kirill X-plora Chugreev, GPL-3.0-or-later.
+ * @license GPL-3.0-or-later
+ * @note Modified 2026-07-22: added asynchronous buffered mode.
  * @date 2026-07-22
  *
  * LCD_I2C_Ru - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
