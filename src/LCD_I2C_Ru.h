@@ -112,6 +112,13 @@ public:
     void begin(bool beginWire = true);
     /** @brief Compatibility alias for begin(). */
     void init() { begin(); }
+    /** @brief Restores an already powered and configured display controller.
+     * @details Does not call TwoWire::begin(), allocate screen buffers, or run
+     * the HD44780 power-on synchronization sequence. The display must already
+     * be operating in 4-bit mode. Custom characters are lost and must be
+     * created again by the caller.
+     */
+    void reinitialize();
     /** @brief Turns the PCF8574-controlled backlight on. */
     void backlight();
     /** @brief Turns the PCF8574-controlled backlight off. */

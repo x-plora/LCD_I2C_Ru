@@ -108,6 +108,26 @@ void LCD_I2C_Ru::begin(bool beginWire)
         invalidate();
 }
 
+void LCD_I2C_Ru::reinitialize()
+{
+    const bool asyncWasEnabled = _async;
+    _async = false;
+    _output.rs = 0;
+    _output.rw = 0;
+
+    const uint8_t functionSet = 0b00100000 | (_rows > 1 ? 0b00001000 : 0);
+    LCD_WriteByte(functionSet);
+    delayMicroseconds(37);
+    display();
+    clear();
+    leftToRight();
+
+    _utf8CyrillicLead = -1;
+    _async = asyncWasEnabled && hasBuffers();
+    if (_async)
+        invalidate();
+}
+
 void LCD_I2C_Ru::backlight()
 {
     _output.Led = 1;
