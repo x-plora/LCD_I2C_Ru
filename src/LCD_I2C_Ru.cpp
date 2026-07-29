@@ -8,8 +8,9 @@
  * @copyright Copyright (C) 2020 Blackhack, GPL-3.0-or-later.
  * @copyright Copyright (C) 2026 Kirill X-plora Chugreev, GPL-3.0-or-later.
  * @license GPL-3.0-or-later
+ * @note Modified 2026-07-30: moved the AVR Cyrillic lookup table to PROGMEM.
  * @note Modified 2026-07-22: added asynchronous buffered mode.
- * @date 2026-07-22
+ * @date 2026-07-30
  *
  * LCD_I2C_Ru - Arduino library to control a 16x2 LCD via an I2C adapter based on PCF8574
  * 2021-11-18 Brewmanz: make changes to also work for 20x4 LCD2004
@@ -35,6 +36,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __AVR__
+#include <avr/pgmspace.h>
+#define LCD_I2C_RU_PROGMEM PROGMEM
+#else
+#define LCD_I2C_RU_PROGMEM
+#endif
+
 /** @brief Maximum row count addressable by the HD44780 row-offset table. */
 static const uint8_t lcdMaxRows = 4;
 /** @brief Maximum data characters grouped in one Wire transmission. */
@@ -46,7 +54,7 @@ static const uint8_t lcdMaxCharsPerI2cBurst = 4;
  * https://github.com/mk90/LiquidCrystalRus. Indexes are low six bits after
  * UTF-8 lead bytes 0xD0 or 0xD1.
  */
-static const uint8_t utf8CyrillicToHd44780[64] = {
+static const uint8_t utf8CyrillicToHd44780[64] LCD_I2C_RU_PROGMEM = {
     0x70, 0x63, 0xbf, 0x79, 0xe4, 0x78, 0xe5, 0xc0,
     0xc1, 0xe6, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
     0x41, 0xa0, 0x42, 0xa1, 0xe0, 0x45, 0xa3, 0xa4,
@@ -56,6 +64,16 @@ static const uint8_t utf8CyrillicToHd44780[64] = {
     0x61, 0xb2, 0xb3, 0xb4, 0xe3, 0x65, 0xb6, 0xb7,
     0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0x6f, 0xbe
 };
+
+/** @brief Reads one Cyrillic ROM mapping without copying the table to AVR SRAM. */
+static uint8_t readUtf8CyrillicToHd44780(uint8_t suffix)
+{
+#ifdef __AVR__
+    return pgm_read_byte(&utf8CyrillicToHd44780[suffix]);
+#else
+    return utf8CyrillicToHd44780[suffix];
+#endif
+}
 
 LCD_I2C_Ru::LCD_I2C_Ru(TwoWire& wire, uint8_t address, uint8_t columns, uint8_t rows)
     : _wire(wire) // Use the TwoWire object passed as parameter.
@@ -385,7 +403,7 @@ size_t LCD_I2C_Ru::write(uint8_t character)
             const uint8_t hd44780Character =
                 (_utf8CyrillicLead == 0 && suffix == 0x01) ? 0xA2 :
                 (_utf8CyrillicLead == 1 && suffix == 0x11) ? 0xB5 :
-                utf8CyrillicToHd44780[suffix];
+                readUtf8CyrillicToHd44780(suffix);
             _utf8CyrillicLead = -1;
             writeCharacter(hd44780Character);
             return 1;
