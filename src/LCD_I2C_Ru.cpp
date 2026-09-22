@@ -93,8 +93,10 @@ LCD_I2C_Ru::LCD_I2C_Ru(uint8_t address, uint8_t columns, uint8_t rows)
 
 LCD_I2C_Ru::~LCD_I2C_Ru()
 {
+#if !defined(LCD_I2C_RU_STATIC_BUFFER_SIZE) || LCD_I2C_RU_STATIC_BUFFER_SIZE == 0
     free(_shadow);
     free(_screen);
+#endif
 }
 
 void LCD_I2C_Ru::begin(int sdaPin, int sclPin, bool beginWire)
@@ -525,6 +527,17 @@ bool LCD_I2C_Ru::allocateBuffers()
         return true;
     }
 
+#if defined(LCD_I2C_RU_STATIC_BUFFER_SIZE) && LCD_I2C_RU_STATIC_BUFFER_SIZE > 0
+    if (requestedSize > LCD_I2C_RU_STATIC_BUFFER_SIZE)
+    {
+        _shadow = nullptr;
+        _screen = nullptr;
+        _bufferSize = 0;
+        return false;
+    }
+    _shadow = _shadowStorage;
+    _screen = _screenStorage;
+#else
     free(_shadow);
     free(_screen);
     _shadow = static_cast<uint8_t *>(malloc(requestedSize));
@@ -538,6 +551,7 @@ bool LCD_I2C_Ru::allocateBuffers()
         _bufferSize = 0;
         return false;
     }
+#endif
 
     _bufferSize = requestedSize;
     memset(_shadow, ' ', _bufferSize);

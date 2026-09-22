@@ -247,6 +247,10 @@ private:
     bool _async = false; ///< True while writes target the shadow buffer.
     uint8_t *_shadow = nullptr; ///< Desired screen contents for asynchronous mode.
     uint8_t *_screen = nullptr; ///< Last successfully transmitted screen contents.
+#if defined(LCD_I2C_RU_STATIC_BUFFER_SIZE) && LCD_I2C_RU_STATIC_BUFFER_SIZE > 0
+    uint8_t _shadowStorage[LCD_I2C_RU_STATIC_BUFFER_SIZE]; ///< Optional allocation-free shadow storage.
+    uint8_t _screenStorage[LCD_I2C_RU_STATIC_BUFFER_SIZE]; ///< Optional allocation-free transmitted-screen storage.
+#endif
     uint16_t _bufferSize = 0; ///< Number of bytes in each screen buffer.
     uint8_t _cursorCol = 0; ///< Buffered cursor column.
     uint8_t _cursorRow = 0; ///< Buffered cursor row.

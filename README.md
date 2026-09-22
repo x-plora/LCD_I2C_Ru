@@ -32,6 +32,11 @@ changed characters without blocking the main loop. `flush()` sends all pending
 changes immediately. `getTransmissionErrorCount()` returns the number of I2C
 transmissions rejected by the bus.
 
+Define `LCD_I2C_RU_STATIC_BUFFER_SIZE` at build time to store both asynchronous
+buffers inside the display object and avoid heap allocation. The value must be
+at least `columns * rows`; without the define, the library keeps its dynamic
+allocation behavior.
+
 ## Русский
 
 Библиотека Arduino для управления LCD-дисплеями, совместимыми с HD44780,
